@@ -57,6 +57,10 @@
 - Zustand 状态管理
 - LocalStorage 数据持久化
 
+### 数据存储机制
+
+应用使用浏览器的 LocalStorage 来存储数据，这是一种本地存储机制。每个用户在自己的浏览器中访问应用时，都会使用各自浏览器的独立存储空间，数据是完全隔离的。即使多个用户同时访问同一个 GitHub Pages 上的应用，他们的待办事项数据也是相互独立的，不会相互影响。
+
 ### 工具库
 - date-fns 日期处理
 - react-beautiful-dnd 拖拽功能
@@ -98,6 +102,37 @@ npm run dev
 访问 http://localhost:5173 查看应用
 
 ### 4. 生产环境构建
+
+```bash
+# 构建生产环境版本
+npm run build
+```
+
+## 自动部署
+
+项目使用GitHub Actions实现自动化部署到GitHub Pages。每当代码推送到main分支时，会自动触发部署流程。
+
+### 部署工作流配置
+
+项目的GitHub Actions工作流配置（`.github/workflows/deploy.yml`）包含以下主要步骤：
+
+1. **触发条件**
+   - 监听main分支的推送事件
+
+2. **环境配置**
+   - 使用ubuntu-latest作为运行环境
+   - 配置仓库写入权限
+
+3. **构建步骤**
+   - 检出代码仓库
+   - 配置Git用户信息
+   - 设置Node.js 18环境
+   - 安装项目依赖
+   - 构建项目
+
+4. **部署步骤**
+   - 使用peaceiris/actions-gh-pages@v3部署到GitHub Pages
+   - 自动将构建产物（dist目录）部署到gh-pages分支
 
 ```bash
 # 构建生产版本
