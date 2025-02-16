@@ -13,6 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -23,16 +28,6 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Create gh-pages branch if not exists
-        run: |
-          git fetch origin
-          if ! git rev-parse --verify origin/gh-pages; then
-            git checkout --orphan gh-pages
-            git reset --hard
-            git commit --allow-empty -m "Initial gh-pages commit"
-            git push origin gh-pages
-          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
