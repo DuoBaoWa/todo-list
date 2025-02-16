@@ -231,8 +231,12 @@ function App({
 
             <TodoForm onSubmit={handleAddTodo} />
 
-            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-              <FormControl fullWidth sx={{ minWidth: { xs: '100%', sm: 120 } }}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={2} 
+              sx={{ mb: 2 }}
+            >
+              <FormControl fullWidth>
                 <InputLabel>筛选标签</InputLabel>
                 <Select
                   value={filterTag}
@@ -245,7 +249,7 @@ function App({
                   ))}
                 </Select>
               </FormControl>
-              <FormControl fullWidth sx={{ minWidth: { xs: '100%', sm: 120 } }}>
+              <FormControl fullWidth>
                 <InputLabel>优先级</InputLabel>
                 <Select
                   value={filterPriority}
