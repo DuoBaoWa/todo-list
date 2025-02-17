@@ -37,6 +37,10 @@
   - 🎭 明暗主题切换
   - 📱 响应式设计，完美适配移动端
   - ⌨️ 支持快捷键操作
+  - 🎵 音频自定义
+    - 🔊 工作和休息时间提示音设置
+    - 🎶 自定义上传提示音乐
+    - 🔇 声音和通知开关控制
 
 ## (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ 技术栈
 
@@ -171,16 +175,16 @@ npm run preview
 ```
 todo-list/
 ├── src/
-│   ├── components/     # 组件目录
-│   │   ├── Task/      # 任务相关组件
-│   │   ├── Timer/     # 番茄钟组件
-│   │   └── Stats/     # 统计组件
-│   ├── hooks/         # 自定义 Hooks
-│   ├── store/         # 状态管理
-│   ├── styles/        # 样式文件
-│   ├── utils/         # 工具函数
-│   ├── App.jsx        # 主应用组件
-│   └── main.jsx       # 应用入口
+│   ├── components/        # 组件目录
+│   │   ├── Analytics.jsx  # 数据分析组件
+│   │   ├── Pomodoro.jsx   # 番茄钟组件
+│   │   ├── ThemeSettings.jsx # 主题设置组件
+│   │   ├── TodoForm.jsx   # 任务表单组件
+│   │   └── TodoList.jsx   # 任务列表组件
+│   ├── utils/            # 工具函数
+│   │   └── audioManager.js # 音频管理工具
+│   ├── App.jsx           # 主应用组件
+│   └── main.jsx          # 应用入口
 ├── public/            # 静态资源
 └── package.json       # 项目配置
 ```

@@ -30,6 +30,16 @@ import TodoList from './components/TodoList'
 import ThemeSettings from './components/ThemeSettings'
 import { FileUpload as FileUploadIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material'
 
+/**
+ * App组件 - Todo List应用的主要组件
+ * @param {Object} props
+ * @param {boolean} props.darkMode - 当前主题模式（暗色/亮色）
+ * @param {Function} props.onToggleDarkMode - 切换主题模式的回调函数
+ * @param {string} props.primaryColor - 主题主要颜色
+ * @param {string} props.secondaryColor - 主题次要颜色
+ * @param {Function} props.onPrimaryColorChange - 更改主题主要颜色的回调函数
+ * @param {Function} props.onSecondaryColorChange - 更改主题次要颜色的回调函数
+ */
 function App({
   darkMode,
   onToggleDarkMode,
@@ -38,32 +48,49 @@ function App({
   onPrimaryColorChange,
   onSecondaryColorChange,
 }) {
+  // 从localStorage加载待办事项列表，如果没有则使用空数组
   const [todos, setTodos] = useState(() => {
     const savedTodos = localStorage.getItem('todos')
     return savedTodos ? JSON.parse(savedTodos) : []
   })
+
+  // 从localStorage加载已归档的待办事项
   const [archivedTodos, setArchivedTodos] = useState(() => {
     const savedArchivedTodos = localStorage.getItem('archivedTodos')
     return savedArchivedTodos ? JSON.parse(savedArchivedTodos) : []
   })
+
+  // 当前选中的标签页索引
   const [currentTab, setCurrentTab] = useState(0)
+  // 任务标签筛选
   const [filterTag, setFilterTag] = useState('')
+  // 任务优先级筛选
   const [filterPriority, setFilterPriority] = useState('')
 
+  // 当待办事项列表发生变化时，保存到localStorage
   useEffect(() => {
     localStorage.setItem('todos', JSON.stringify(todos))
   }, [todos])
 
+  // 当已归档待办事项发生变化时，保存到localStorage
   useEffect(() => {
     localStorage.setItem('archivedTodos', JSON.stringify(archivedTodos))
   }, [archivedTodos])
 
+  /**
+   * 归档已完成的待办事项
+   * 将已完成的任务从待办列表移动到归档列表
+   */
   const handleArchiveTodos = () => {
     const completedTodos = todos.filter(todo => todo.completed)
     setArchivedTodos([...archivedTodos, ...completedTodos])
     setTodos(todos.filter(todo => !todo.completed))
   }
 
+  /**
+   * 添加新的待办事项
+   * @param {Object} todoData - 新待办事项的数据
+   */
   const handleAddTodo = (todoData) => {
     setTodos([...todos, { 
       id: Date.now(), 
@@ -76,6 +103,10 @@ function App({
     }])
   }
 
+  /**
+   * 切换待办事项的完成状态
+   * @param {number} id - 待办事项的唯一标识
+   */
   const handleToggleTodo = (id) => {
     setTodos(
       todos.map((todo) =>
@@ -88,10 +119,18 @@ function App({
     )
   }
 
+  /**
+   * 删除指定的待办事项
+   * @param {number} id - 待办事项的唯一标识
+   */
   const handleDeleteTodo = (id) => {
     setTodos(todos.filter((todo) => todo.id !== id))
   }
 
+  /**
+   * 导出待办事项数据
+   * 将当前待办事项列表导出为JSON文件
+   */
   const handleExportData = () => {
     const data = {
       todos,

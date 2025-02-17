@@ -2,29 +2,55 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Paper, Typography, Grid, ToggleButton, ToggleButtonGroup, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import * as echarts from 'echarts';
 
+/**
+ * Analytics组件 - 任务数据统计和可视化
+ * @param {Object} props
+ * @param {Array} props.todos - 待办事项列表，包括当前和已归档的任务
+ */
 const Analytics = ({ todos }) => {
+  // 图表DOM引用
   const taskCompletionChartRef = useRef(null);
   const pomodoroChartRef = useRef(null);
   const workTimeChartRef = useRef(null);
   const trendChartRef = useRef(null);
+
+  // 数据筛选状态
   const [timeRange, setTimeRange] = useState('week');
   const [selectedTag, setSelectedTag] = useState('all');
   const [selectedPriority, setSelectedPriority] = useState('all');
 
+  /**
+   * 处理时间范围变更
+   * @param {Event} event - 事件对象
+   * @param {string} newTimeRange - 新的时间范围值
+   */
   const handleTimeRangeChange = (event, newTimeRange) => {
     if (newTimeRange !== null) {
       setTimeRange(newTimeRange);
     }
   };
 
+  /**
+   * 处理标签筛选变更
+   * @param {Event} event - 事件对象
+   */
   const handleTagChange = (event) => {
     setSelectedTag(event.target.value);
   };
 
+  /**
+   * 处理优先级筛选变更
+   * @param {Event} event - 事件对象
+   */
   const handlePriorityChange = (event) => {
     setSelectedPriority(event.target.value);
   };
 
+  /**
+   * 根据标签和优先级筛选任务
+   * @param {Array} todoList - 待过滤的任务列表
+   * @returns {Array} 过滤后的任务列表
+   */
   const filterTodos = (todoList) => {
     return todoList.filter(todo => {
       const tagMatch = selectedTag === 'all' || (!todo.tags && selectedTag === '') || (todo.tags && todo.tags.includes(selectedTag));
@@ -33,6 +59,11 @@ const Analytics = ({ todos }) => {
     });
   };
 
+  /**
+   * 获取指定时间范围的数据
+   * @param {string} range - 时间范围（week/month/year）
+   * @returns {Array} 按日期组织的数据数组
+   */
   const getTimeRangeData = (range) => {
     const now = new Date();
     const data = [];

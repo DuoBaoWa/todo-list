@@ -22,18 +22,46 @@ import confetti from 'canvas-confetti';
 import { PlayArrow, Pause, Stop, VolumeUp, Settings } from '@mui/icons-material';
 import { useSpring, animated } from 'react-spring';
 
+/**
+ * Pomodoro组件 - 番茄工作法计时器
+ * @param {Object} props
+ * @param {Array} props.todos - 待办事项列表
+ * @param {Function} props.setTodos - 更新待办事项的函数
+ */
 const Pomodoro = ({ todos, setTodos }) => {
+  // 当前选中的任务ID
   const [selectedTask, setSelectedTask] = useState('');
+  // 剩余时间（秒）
   const [timeLeft, setTimeLeft] = useState(25 * 60);
+  // 计时器运行状态
   const [isRunning, setIsRunning] = useState(false);
+  // 当前模式（工作/休息）
   const [mode, setMode] = useState('work');
+  // 计时方向（正向/倒计时）
   const [isForward, setIsForward] = useState(false);
+  // 已经过时间
   const [elapsedTime, setElapsedTime] = useState(0);
+  // 工作时长（分钟）
   const [workTime, setWorkTime] = useState(25);
+  // 休息时长（分钟）
   const [breakTime, setBreakTime] = useState(5);
+  // 设置对话框状态
   const [openSettings, setOpenSettings] = useState(false);
+  // 工作提示音文件
+  const [workAudioFile, setWorkAudioFile] = useState(() => {
+    const savedWorkAudio = localStorage.getItem('workAudioFile');
+    return savedWorkAudio || '/todo-list/notification.mp3';
+  });
+  // 休息提示音文件
+  const [breakAudioFile, setBreakAudioFile] = useState(() => {
+    const savedBreakAudio = localStorage.getItem('breakAudioFile');
+    return savedBreakAudio || '/todo-list/break-notification.mp3';
+  });
+  // 祝贺对话框状态
   const [showCongrats, setShowCongrats] = useState(false);
+  // Web Worker引用
   const workerRef = useRef(null);
+  // 系统唤醒锁引用
   const wakeLockRef = useRef(null);
 
   useEffect(() => {
@@ -174,19 +202,43 @@ const Pomodoro = ({ todos, setTodos }) => {
     requestNotificationPermission();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('workAudioFile', workAudioFile);
+  }, [workAudioFile]);
+
+  useEffect(() => {
+    localStorage.setItem('breakAudioFile', breakAudioFile);
+  }, [breakAudioFile]);
+
+  const handleWorkAudioChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const audioUrl = URL.createObjectURL(file);
+      setWorkAudioFile(audioUrl);
+    }
+  };
+
+  const handleBreakAudioChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const audioUrl = URL.createObjectURL(file);
+      setBreakAudioFile(audioUrl);
+    }
+  };
+
   const playNotificationSound = async () => {
-    const audio = new Audio('/notification.mp3');
     try {
-      await audio.play();
-    } catch (error) {
-      console.error('播放提示音失败:', error);
-      // 如果播放失败，尝试使用备用声音
-      try {
-        const fallbackAudio = new Audio('/beep.mp3');
-        await fallbackAudio.play();
-      } catch (fallbackError) {
-        console.error('备用提示音也播放失败:', fallbackError);
+      const audioFile = mode === 'work' ? workAudioFile : breakAudioFile;
+      const audio = new Audio(audioFile);
+      await audio.load();
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error('播放提示音失败:', error);
+        });
       }
+    } catch (error) {
+      console.error('加载提示音失败:', error);
     }
   };
 
@@ -200,34 +252,62 @@ const Pomodoro = ({ todos, setTodos }) => {
   };
 
   const handleTimerComplete = () => {
-    playNotificationSound();
-    showNotification();
+    setIsRunning(false);
+    
     if (mode === 'work' && selectedTask) {
-      triggerConfetti();
+      playNotificationSound(); // 工作时间结束时播放提示音
+      showNotification();
+      const selectedTodo = todos.find(todo => todo.id === selectedTask);
+      const newCompletedPomodoros = selectedTodo.completedPomodoros + 1;
+      
       setTodos(prevTodos => {
         return prevTodos.map(todo => {
           if (todo.id === selectedTask) {
-            const newCompletedPomodoros = todo.completedPomodoros + 1;
-            const isCompleted = newCompletedPomodoros >= todo.pomodoroCount;
             const workTimeInMinutes = workTime;
             return {
               ...todo,
               completedPomodoros: newCompletedPomodoros,
-              completed: isCompleted,
-              totalWorkTime: todo.totalWorkTime + workTimeInMinutes,
-              completionTime: isCompleted ? new Date().toISOString() : todo.completionTime
+              totalWorkTime: todo.totalWorkTime + workTimeInMinutes
             };
           }
           return todo;
         });
       });
-      setMode('break');
-      setTimeLeft(breakTime * 60);
-    } else {
-      setMode('work');
-      setTimeLeft(workTime * 60);
+
+      setTimeout(() => {
+        setMode('break');
+        setTimeLeft(breakTime * 60);
+        setIsRunning(true);
+      }, 1000);
+    } else if (mode === 'break' && selectedTask) {
+      playNotificationSound(); // 休息时间结束时播放提示音
+      showNotification();
+      const selectedTodo = todos.find(todo => todo.id === selectedTask);
+      if (selectedTodo) {
+        const isCompleted = selectedTodo.completedPomodoros >= selectedTodo.pomodoroCount;
+        if (isCompleted) {
+          setTodos(prevTodos => {
+            return prevTodos.map(todo => {
+              if (todo.id === selectedTask) {
+                return {
+                  ...todo,
+                  completed: true,
+                  completionTime: new Date().toISOString()
+                };
+              }
+              return todo;
+            });
+          });
+          triggerConfetti();
+        } else {
+          setTimeout(() => {
+            setMode('work');
+            setTimeLeft(workTime * 60);
+            setIsRunning(true);
+          }, 1000);
+        }
+      }
     }
-    setIsRunning(false);
   };
 
   const handleSettingsOpen = () => setOpenSettings(true);
@@ -311,6 +391,11 @@ const Pomodoro = ({ todos, setTodos }) => {
           <Typography variant="subtitle1" color="text.secondary">
             {isForward ? '已计时' : (mode === 'work' ? '工作时间' : '休息时间')}
           </Typography>
+          {selectedTask && (
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>
+              {`进度: ${todos.find(todo => todo.id === selectedTask)?.completedPomodoros || 0} / ${todos.find(todo => todo.id === selectedTask)?.pomodoroCount || 0} 个番茄钟`}
+            </Typography>
+          )}
         </Box>
 
         <Box sx={{ textAlign: 'center', mb: 2 }}>
@@ -345,24 +430,52 @@ const Pomodoro = ({ todos, setTodos }) => {
         </Stack>
 
         <Dialog open={openSettings} onClose={handleSettingsClose}>
-          <DialogTitle>时间设置</DialogTitle>
-          <DialogContent>
+          <DialogTitle>设置</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
             <TextField
-              margin="dense"
               label="工作时长（分钟）"
               type="number"
-              fullWidth
               value={workTime}
-              onChange={(e) => setWorkTime(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => setWorkTime(parseInt(e.target.value))}
             />
             <TextField
-              margin="dense"
               label="休息时长（分钟）"
               type="number"
-              fullWidth
               value={breakTime}
-              onChange={(e) => setBreakTime(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => setBreakTime(parseInt(e.target.value))}
             />
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>工作结束提示音</Typography>
+              <input
+                accept="audio/*"
+                style={{ display: 'none' }}
+                id="work-audio-file"
+                type="file"
+                onChange={handleWorkAudioChange}
+              />
+              <label htmlFor="work-audio-file">
+                <Button variant="outlined" component="span">
+                  选择音频文件
+                </Button>
+              </label>
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>休息结束提示音</Typography>
+              <input
+                accept="audio/*"
+                style={{ display: 'none' }}
+                id="break-audio-file"
+                type="file"
+                onChange={handleBreakAudioChange}
+              />
+              <label htmlFor="break-audio-file">
+                <Button variant="outlined" component="span">
+                  选择音频文件
+                </Button>
+              </label>
+            </Box>
+          </Stack>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleSettingsClose}>取消</Button>

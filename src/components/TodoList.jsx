@@ -16,21 +16,36 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 
+/**
+ * 任务优先级对应的颜色映射
+ */
 const PRIORITY_COLORS = {
   high: '#f44336',
   medium: '#ff9800',
   low: '#4caf50',
 };
 
+/**
+ * 任务优先级对应的标签文本映射
+ */
 const PRIORITY_LABELS = {
   high: '高',
   medium: '中',
   low: '低',
 };
 
+/**
+ * TodoList组件 - 显示待办事项列表
+ * @param {Object} props
+ * @param {Array} props.todos - 待办事项数组
+ * @param {Function} props.onToggle - 切换任务完成状态的回调函数
+ * @param {Function} props.onDelete - 删除任务的回调函数
+ */
 function TodoList({ todos, onToggle, onDelete }) {
+  // 任务显示过滤器状态
   const [filter, setFilter] = React.useState('active');
 
+  // 根据过滤条件筛选任务
   const filteredTodos = React.useMemo(() => {
     switch (filter) {
       case 'completed':
